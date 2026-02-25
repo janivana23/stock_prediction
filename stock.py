@@ -31,7 +31,10 @@ st.markdown(
 # 1. STOCK SELECTION / CSV UPLOAD
 # =====================================================
 st.sidebar.subheader("Select or Upload Stock Data")
-stock_choice = st.sidebar.selectbox(["AAPL", "MSFT", "SPY"])
+stock_choice = st.sidebar.selectbox(
+    "Select Preset Stock",  # <-- label
+    ["AAPL", "MSFT", "SPY"]  # options
+)
 uploaded_file = st.sidebar.file_uploader("Or upload your own CSV (Nasdaq format)", type="csv")
 show_price_prediction = st.sidebar.checkbox("Show predicted price for next 5 days")
 
