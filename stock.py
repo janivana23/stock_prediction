@@ -10,6 +10,23 @@ st.title("📈 Stock Market 5-Day Direction Prediction")
 st.caption("Predict price direction 5 trading days ahead using ML")
 
 # =====================================================
+# 0. USER INSTRUCTIONS
+# =====================================================
+st.markdown(
+    """
+    **ℹ️ Instructions for Uploading Your Own CSV:**  
+    1. Go to [Nasdaq Historical Quotes](https://www.nasdaq.com/market-activity/stocks).  
+    2. Search for the stock you want (e.g., AAPL, MSFT, SPY).  
+    3. Click **Historical Data** → **Download Data** → CSV.  
+    4. Ensure the CSV contains at least the following columns:  
+       `Date, Close/Last, Open, High, Low, Volume`.  
+    5. Upload your CSV in the sidebar.  
+
+    ⚠️ **Important:** Only Nasdaq format CSV is supported. Column headers must match exactly, and prices can include `$` or be plain numbers.
+    """
+)
+
+# =====================================================
 # 1. STOCK SELECTION / CSV UPLOAD
 # =====================================================
 st.sidebar.subheader("Select or Upload Stock Data")
