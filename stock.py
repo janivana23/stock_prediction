@@ -3,7 +3,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.metrics import mean_squared_error, r2_score
 
 st.set_page_config(page_title="Stock Direction Prediction", layout="centered")
 st.title("📈 Stock Market 5-Day Direction Prediction")
@@ -34,8 +35,9 @@ stock_choice = st.sidebar.selectbox(
     "Preset Stock",
     ["AAPL", "MSFT", "SPY"]
 )
-
 uploaded_file = st.sidebar.file_uploader("Or upload your own CSV (Nasdaq format)", type="csv")
+
+show_price_prediction = st.sidebar.checkbox("Show predicted price for next 5 days")
 
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
@@ -94,7 +96,10 @@ df["macd_signal"] = df["macd"].ewm(span=9, adjust=False).mean()
 df["return_lag_1"] = df["return"].shift(1)
 df["return_lag_2"] = df["return"].shift(2)
 
+# Classification target (direction)
 df["target"] = (df["close_last"].shift(-5) > df["close_last"]).astype(int)
+# Regression target (price)
+df["target_price_5d"] = df["close_last"].shift(-5)
 
 df = df.dropna().reset_index(drop=True)
 
@@ -107,10 +112,12 @@ features = [
 
 X = df[features]
 y = df["target"]
+y_price = df["target_price_5d"]
 
 split = int(len(df) * 0.8)
 X_train, X_test = X.iloc[:split], X.iloc[split:]
 y_train, y_test = y.iloc[:split], y.iloc[split:]
+y_train_price, y_test_price = y_price.iloc[:split], y_price.iloc[split:]
 
 # =====================================================
 # 4. MODEL TRAINING
@@ -126,6 +133,10 @@ rf_model = RandomForestClassifier(
     random_state=42
 )
 rf_model.fit(X_train, y_train)
+
+# Regression model
+rf_reg = RandomForestRegressor(n_estimators=500, max_depth=6, random_state=42)
+rf_reg.fit(X_train, y_train_price)
 
 # =====================================================
 # 5. NEXT 5-DAY PREDICTION
@@ -143,6 +154,11 @@ with col1:
     st.metric("Logistic Regression", log_direction, delta=f"{log_prob:.2%} confidence")
 with col2:
     st.metric("Random Forest", rf_direction, delta=f"{rf_prob:.2%} confidence")
+
+# Optional predicted price
+if show_price_prediction:
+    next_price_pred = rf_reg.predict(latest_features)[0]
+    st.metric("Predicted Close Price (5-day ahead)", f"${next_price_pred:.2f}")
 
 # Trading signal
 st.subheader("📌 Suggested Signal")
