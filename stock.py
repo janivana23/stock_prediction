@@ -3,8 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.ensemble import RandomForestClassifier
 
 st.set_page_config(page_title="Stock Direction Prediction", layout="centered")
 st.title("📈 Stock Market 5-Day Direction Prediction")
@@ -32,11 +31,11 @@ st.markdown(
 # =====================================================
 st.sidebar.subheader("Select or Upload Stock Data")
 stock_choice = st.sidebar.selectbox(
-    "Select Preset Stock",  # <-- label
-    ["AAPL", "MSFT", "SPY"]  # options
+    "Preset Stock",
+    ["AAPL", "MSFT", "SPY"]
 )
+
 uploaded_file = st.sidebar.file_uploader("Or upload your own CSV (Nasdaq format)", type="csv")
-show_price_prediction = st.sidebar.checkbox("Show predicted price for next 5 days")
 
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
@@ -52,6 +51,8 @@ def clean_data(df):
     df.columns = [c.lower().replace("/", "_").replace(" ", "_") for c in df.columns]
     df["date"] = pd.to_datetime(df["date"])
     df = df.sort_values("date")
+
+    # Ensure numeric conversion works for $ and plain numbers
     for col in ["close_last", "open", "high", "low"]:
         if col in df.columns:
             df[col] = (
@@ -93,10 +94,7 @@ df["macd_signal"] = df["macd"].ewm(span=9, adjust=False).mean()
 df["return_lag_1"] = df["return"].shift(1)
 df["return_lag_2"] = df["return"].shift(2)
 
-# Classification target (direction)
 df["target"] = (df["close_last"].shift(-5) > df["close_last"]).astype(int)
-# Regression target (5-day return)
-df["target_return_5d"] = df["close_last"].shift(-5) / df["close_last"] - 1
 
 df = df.dropna().reset_index(drop=True)
 
@@ -109,12 +107,10 @@ features = [
 
 X = df[features]
 y = df["target"]
-y_return = df["target_return_5d"]
 
 split = int(len(df) * 0.8)
 X_train, X_test = X.iloc[:split], X.iloc[split:]
 y_train, y_test = y.iloc[:split], y.iloc[split:]
-y_train_ret, y_test_ret = y_return.iloc[:split], y_return.iloc[split:]
 
 # =====================================================
 # 4. MODEL TRAINING
@@ -131,18 +127,13 @@ rf_model = RandomForestClassifier(
 )
 rf_model.fit(X_train, y_train)
 
-# Regression model (predict 5-day return)
-rf_reg = RandomForestRegressor(n_estimators=500, max_depth=6, random_state=42)
-rf_reg.fit(X_train, y_train_ret)
-
 # =====================================================
 # 5. NEXT 5-DAY PREDICTION
 # =====================================================
 latest_features = df.iloc[-1][features].values.reshape(1, -1)
-
-# Classification
 log_prob = log_model.predict_proba(latest_features)[0][1]
 rf_prob = rf_model.predict_proba(latest_features)[0][1]
+
 log_direction = "UP 📈" if log_prob > 0.5 else "DOWN 📉"
 rf_direction = "UP 📈" if rf_prob > 0.55 else "DOWN 📉"
 
@@ -152,16 +143,6 @@ with col1:
     st.metric("Logistic Regression", log_direction, delta=f"{log_prob:.2%} confidence")
 with col2:
     st.metric("Random Forest", rf_direction, delta=f"{rf_prob:.2%} confidence")
-
-# Regression: predicted price based on predicted return
-if show_price_prediction:
-    pred_return = rf_reg.predict(latest_features)[0]
-    pred_price = df["close_last"].iloc[-1] * (1 + pred_return)
-    # Only show if RF classifier has reasonable confidence
-    if rf_prob > 0.55:
-        st.metric("Predicted Close Price (5-day ahead)", f"${pred_price:.2f}")
-    else:
-        st.info("Low-confidence signal, predicted price not shown")
 
 # Trading signal
 st.subheader("📌 Suggested Signal")
@@ -184,37 +165,19 @@ importances.plot(kind="barh", ax=ax)
 st.pyplot(fig)
 
 # =====================================================
-# 7. BACKTESTING STRATEGY (Using Predicted Return)
+# 7. BACKTESTING STRATEGY
 # =====================================================
-st.subheader("📈 Backtesting Strategy with Predicted Return")
-
-# Predict 5-day return for all data points
-rf_pred_return_all = rf_reg.predict(X)
-
-# Combine with RF classifier confidence
+st.subheader("📈 Backtesting Strategy")
+df["future_return_5d"] = df["close_last"].shift(-5) / df["close_last"] - 1
 rf_probs_all = rf_model.predict_proba(X)[:,1]
-
-# Strategy signal: scale predicted return by classifier confidence
-# Only act if classifier is confident (prob > 0.62 or < 0.38)
-strategy_signal = []
-for i, prob in enumerate(rf_probs_all):
-    if prob > 0.62:
-        strategy_signal.append(rf_pred_return_all[i])  # use predicted return
-    elif prob < 0.38:
-        strategy_signal.append(rf_pred_return_all[i])  # predicted negative return
-    else:
-        strategy_signal.append(0)  # low confidence → HOLD
-
-df["strategy_return_scaled"] = strategy_signal
-df_bt = df.dropna(subset=["strategy_return_scaled"])
-
-# Cumulative returns
-df_bt["cumulative_strategy"] = (1 + df_bt["strategy_return_scaled"]).cumprod()
+signal = np.where(rf_probs_all > 0.62, 1, np.where(rf_probs_all < 0.38, -1, 0))
+df["strategy_return"] = signal * df["future_return_5d"]
+df_bt = df.dropna(subset=["strategy_return"])
+df_bt["cumulative_strategy"] = (1 + df_bt["strategy_return"]).cumprod()
 df_bt["cumulative_hold"] = (1 + df_bt["future_return_5d"]).cumprod()
 
-# Plot
 fig_bt, ax_bt = plt.subplots()
-ax_bt.plot(df_bt["date"], df_bt["cumulative_strategy"], label="Strategy (Predicted Return)")
+ax_bt.plot(df_bt["date"], df_bt["cumulative_strategy"], label="Strategy")
 ax_bt.plot(df_bt["date"], df_bt["cumulative_hold"], label="Buy & Hold", alpha=0.7)
 ax_bt.set_ylabel("Cumulative Return")
 ax_bt.legend()
