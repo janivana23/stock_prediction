@@ -184,19 +184,37 @@ importances.plot(kind="barh", ax=ax)
 st.pyplot(fig)
 
 # =====================================================
-# 7. BACKTESTING STRATEGY
+# 7. BACKTESTING STRATEGY (Using Predicted Return)
 # =====================================================
-st.subheader("📈 Backtesting Strategy")
-df["future_return_5d"] = df["close_last"].shift(-5) / df["close_last"] - 1
+st.subheader("📈 Backtesting Strategy with Predicted Return")
+
+# Predict 5-day return for all data points
+rf_pred_return_all = rf_reg.predict(X)
+
+# Combine with RF classifier confidence
 rf_probs_all = rf_model.predict_proba(X)[:,1]
-signal = np.where(rf_probs_all > 0.62, 1, np.where(rf_probs_all < 0.38, -1, 0))
-df["strategy_return"] = signal * df["future_return_5d"]
-df_bt = df.dropna(subset=["strategy_return"])
-df_bt["cumulative_strategy"] = (1 + df_bt["strategy_return"]).cumprod()
+
+# Strategy signal: scale predicted return by classifier confidence
+# Only act if classifier is confident (prob > 0.62 or < 0.38)
+strategy_signal = []
+for i, prob in enumerate(rf_probs_all):
+    if prob > 0.62:
+        strategy_signal.append(rf_pred_return_all[i])  # use predicted return
+    elif prob < 0.38:
+        strategy_signal.append(rf_pred_return_all[i])  # predicted negative return
+    else:
+        strategy_signal.append(0)  # low confidence → HOLD
+
+df["strategy_return_scaled"] = strategy_signal
+df_bt = df.dropna(subset=["strategy_return_scaled"])
+
+# Cumulative returns
+df_bt["cumulative_strategy"] = (1 + df_bt["strategy_return_scaled"]).cumprod()
 df_bt["cumulative_hold"] = (1 + df_bt["future_return_5d"]).cumprod()
 
+# Plot
 fig_bt, ax_bt = plt.subplots()
-ax_bt.plot(df_bt["date"], df_bt["cumulative_strategy"], label="Strategy")
+ax_bt.plot(df_bt["date"], df_bt["cumulative_strategy"], label="Strategy (Predicted Return)")
 ax_bt.plot(df_bt["date"], df_bt["cumulative_hold"], label="Buy & Hold", alpha=0.7)
 ax_bt.set_ylabel("Cumulative Return")
 ax_bt.legend()
