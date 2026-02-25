@@ -31,12 +31,8 @@ st.markdown(
 # 1. STOCK SELECTION / CSV UPLOAD
 # =====================================================
 st.sidebar.subheader("Select or Upload Stock Data")
-stock_choice = st.sidebar.selectbox(
-    "Preset Stock",
-    ["AAPL", "MSFT", "SPY"]
-)
+stock_choice = st.sidebar.selectbox(["AAPL", "MSFT", "SPY"])
 uploaded_file = st.sidebar.file_uploader("Or upload your own CSV (Nasdaq format)", type="csv")
-
 show_price_prediction = st.sidebar.checkbox("Show predicted price for next 5 days")
 
 if uploaded_file is not None:
@@ -53,8 +49,6 @@ def clean_data(df):
     df.columns = [c.lower().replace("/", "_").replace(" ", "_") for c in df.columns]
     df["date"] = pd.to_datetime(df["date"])
     df = df.sort_values("date")
-
-    # Ensure numeric conversion works for $ and plain numbers
     for col in ["close_last", "open", "high", "low"]:
         if col in df.columns:
             df[col] = (
@@ -98,8 +92,8 @@ df["return_lag_2"] = df["return"].shift(2)
 
 # Classification target (direction)
 df["target"] = (df["close_last"].shift(-5) > df["close_last"]).astype(int)
-# Regression target (price)
-df["target_price_5d"] = df["close_last"].shift(-5)
+# Regression target (5-day return)
+df["target_return_5d"] = df["close_last"].shift(-5) / df["close_last"] - 1
 
 df = df.dropna().reset_index(drop=True)
 
@@ -112,12 +106,12 @@ features = [
 
 X = df[features]
 y = df["target"]
-y_price = df["target_price_5d"]
+y_return = df["target_return_5d"]
 
 split = int(len(df) * 0.8)
 X_train, X_test = X.iloc[:split], X.iloc[split:]
 y_train, y_test = y.iloc[:split], y.iloc[split:]
-y_train_price, y_test_price = y_price.iloc[:split], y_price.iloc[split:]
+y_train_ret, y_test_ret = y_return.iloc[:split], y_return.iloc[split:]
 
 # =====================================================
 # 4. MODEL TRAINING
@@ -134,17 +128,18 @@ rf_model = RandomForestClassifier(
 )
 rf_model.fit(X_train, y_train)
 
-# Regression model
+# Regression model (predict 5-day return)
 rf_reg = RandomForestRegressor(n_estimators=500, max_depth=6, random_state=42)
-rf_reg.fit(X_train, y_train_price)
+rf_reg.fit(X_train, y_train_ret)
 
 # =====================================================
 # 5. NEXT 5-DAY PREDICTION
 # =====================================================
 latest_features = df.iloc[-1][features].values.reshape(1, -1)
+
+# Classification
 log_prob = log_model.predict_proba(latest_features)[0][1]
 rf_prob = rf_model.predict_proba(latest_features)[0][1]
-
 log_direction = "UP 📈" if log_prob > 0.5 else "DOWN 📉"
 rf_direction = "UP 📈" if rf_prob > 0.55 else "DOWN 📉"
 
@@ -155,10 +150,15 @@ with col1:
 with col2:
     st.metric("Random Forest", rf_direction, delta=f"{rf_prob:.2%} confidence")
 
-# Optional predicted price
+# Regression: predicted price based on predicted return
 if show_price_prediction:
-    next_price_pred = rf_reg.predict(latest_features)[0]
-    st.metric("Predicted Close Price (5-day ahead)", f"${next_price_pred:.2f}")
+    pred_return = rf_reg.predict(latest_features)[0]
+    pred_price = df["close_last"].iloc[-1] * (1 + pred_return)
+    # Only show if RF classifier has reasonable confidence
+    if rf_prob > 0.55:
+        st.metric("Predicted Close Price (5-day ahead)", f"${pred_price:.2f}")
+    else:
+        st.info("Low-confidence signal, predicted price not shown")
 
 # Trading signal
 st.subheader("📌 Suggested Signal")
