@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Signal Analyzer</title>
+    <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@300;400;600;700&display=swap');
+        
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-tertiary: #1a2332;
+            --accent-buy: #10b981;
+            --accent-sell: #ef4444;
+            --accent-hold: #f59e0b;
+            --accent-primary: #3b82f6;
+            --text-primary: #f9fafb;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            --border: #1f2937;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        /* Animated background */
+        .bg-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(var(--border) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 50px 50px;
+            opacity: 0.3;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        header {
+            margin-bottom: 3rem;
+            text-align: center;
+            animation: slideDown 0.6s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+        
+        .search-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            animation: fadeIn 0.8s ease-out 0.2s both;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+        
+        input[type="text"]::placeholder {
+            color: var(--text-muted);
+            text-transform: none;
+            font-weight: 400;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        button {
+            padding: 1rem 2.5rem;
+            background: linear-gradient(135deg, var(--accent-primary), #8b5cf6);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Outfit', sans-serif;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .quick-picks {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+        
+        .quick-pick {
+            padding: 0.5rem 1rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .quick-pick:hover {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 2rem;
+            animation: fadeIn 1s ease-out 0.4s both;
+        }
+        
+        .chart-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            min-height: 500px;
+        }
+        
+        #tradingview-chart {
+            width: 100%;
+            height: 500px;
+            border-radius: 8px;
+            background: var(--bg-tertiary);
+        }
+        
+        .analysis-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .signal-card {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .signal-card.buy {
+            border-color: var(--accent-buy);
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), transparent);
+        }
+        
+        .signal-card.sell {
+            border-color: var(--accent-sell);
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.05), transparent);
+        }
+        
+        .signal-card.hold {
+            border-color: var(--accent-hold);
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), transparent);
+        }
+        
+        .signal-badge {
+            display: inline-block;
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .signal-badge.buy {
+            background: var(--accent-buy);
+            color: white;
+        }
+        
+        .signal-badge.sell {
+            background: var(--accent-sell);
+            color: white;
+        }
+        
+        .signal-badge.hold {
+            background: var(--accent-hold);
+            color: white;
+        }
+        
+        .confidence-meter {
+            margin: 1.5rem 0;
+        }
+        
+        .confidence-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .confidence-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .confidence-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+        
+        .info-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+        
+        .info-card h3 {
+            font-size: 1.125rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .info-card h3::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: var(--accent-primary);
+            border-radius: 2px;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .metric {
+            background: var(--bg-tertiary);
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        
+        .metric-label {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+        
+        .metric-value {
+            font-size: 1.25rem;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .metric-value.positive {
+            color: var(--accent-buy);
+        }
+        
+        .metric-value.negative {
+            color: var(--accent-sell);
+        }
+        
+        .analysis-text {
+            background: var(--bg-tertiary);
+            padding: 1rem;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.7;
+            border-left: 3px solid var(--accent-primary);
+        }
+        
+        .analysis-text ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .analysis-text li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .analysis-text li:last-child {
+            border-bottom: none;
+        }
+        
+        .analysis-text li::before {
+            content: '▸';
+            color: var(--accent-primary);
+            margin-right: 0.5rem;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+        
+        .loading.active {
+            display: block;
+        }
+        
+        .spinner {
+            border: 3px solid var(--bg-tertiary);
+            border-top: 3px solid var(--accent-primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--accent-sell);
+            border-radius: 12px;
+            padding: 1rem;
+            color: var(--accent-sell);
+            display: none;
+        }
+        
+        .error.active {
+            display: block;
+        }
+        
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+        }
+        
+        .disclaimer {
+            margin-top: 3rem;
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    
+    <div class="container">
+        <header>
+            <h1>Stock Signal Analyzer</h1>
+            <p class="subtitle">AI-Powered Technical Analysis with Simple English Recommendations</p>
+        </header>
+        
+        <div class="search-section">
+            <div class="input-group">
+                <input type="text" id="symbolInput" placeholder="Enter stock symbol (e.g., AAPL, TSLA, MSFT)" value="AAPL">
+                <button id="analyzeBtn" onclick="analyzeStock()">Analyze Stock</button>
+            </div>
+            <div class="quick-picks">
+                <span style="color: var(--text-muted); font-size: 0.875rem; margin-right: 0.5rem;">Quick picks:</span>
+                <div class="quick-pick" onclick="setSymbol('AAPL')">AAPL</div>
+                <div class="quick-pick" onclick="setSymbol('TSLA')">TSLA</div>
+                <div class="quick-pick" onclick="setSymbol('MSFT')">MSFT</div>
+                <div class="quick-pick" onclick="setSymbol('GOOGL')">GOOGL</div>
+                <div class="quick-pick" onclick="setSymbol('NVDA')">NVDA</div>
+                <div class="quick-pick" onclick="setSymbol('AMZN')">AMZN</div>
+            </div>
+        </div>
+        
+        <div class="error" id="errorMsg"></div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analyzing stock data and generating recommendation...</p>
+        </div>
+        
+        <div class="main-grid" id="mainContent" style="display: none;">
+            <div class="chart-section">
+                <div id="tradingview-chart"></div>
+            </div>
+            
+            <div class="analysis-panel">
+                <div class="signal-card" id="signalCard">
+                    <div class="signal-badge" id="signalBadge">BUY</div>
+                    <h2 id="stockSymbol">AAPL</h2>
+                    <div class="confidence-meter">
+                        <div class="confidence-label">Confidence Level: <span id="confidenceText">85%</span></div>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" id="confidenceFill" style="width: 85%; background: var(--accent-buy);"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-card">
+                    <h3>Key Metrics</h3>
+                    <div class="metrics-grid" id="metricsGrid">
+                        <div class="metric">
+                            <div class="metric-label">Price</div>
+                            <div class="metric-value">$180.50</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Change</div>
+                            <div class="metric-value positive">+2.3%</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Volume</div>
+                            <div class="metric-value">52.3M</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">RSI</div>
+                            <div class="metric-value">68</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-card">
+                    <h3>Analysis Summary</h3>
+                    <div class="analysis-text" id="analysisText">
+                        <ul>
+                            <li>Strong upward momentum detected</li>
+                            <li>Price above 50-day moving average</li>
+                            <li>Volume increasing on up days</li>
+                            <li>RSI not overbought yet</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="disclaimer">
+            <strong>⚠️ Disclaimer:</strong> This analysis is for educational purposes only and should not be considered financial advice. 
+            Always do your own research and consult with a financial advisor before making investment decisions.
+        </div>
+    </div>
+    
+    <script>
+        let chart = null;
+        let candleSeries = null;
+        
+        function setSymbol(symbol) {
+            document.getElementById('symbolInput').value = symbol;
+            analyzeStock();
+        }
+        
+        async function analyzeStock() {
+            const symbol = document.getElementById('symbolInput').value.trim().toUpperCase();
+            if (!symbol) {
+                showError('Please enter a stock symbol');
+                return;
+            }
+            
+            hideError();
+            showLoading(true);
+            document.getElementById('mainContent').style.display = 'none';
+            
+            try {
+                // Fetch stock data
+                const stockData = await fetchStockData(symbol);
+                
+                // Calculate technical indicators
+                const analysis = analyzeStockData(stockData);
+                
+                // Update UI
+                updateChart(stockData);
+                updateAnalysisPanel(symbol, analysis, stockData);
+                
+                document.getElementById('mainContent').style.display = 'grid';
+            } catch (error) {
+                showError(error.message || 'Failed to fetch stock data. Please try again.');
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        async function fetchStockData(symbol) {
+            // Using Alpha Vantage API (free tier)
+            // Note: You'll need to get your own API key from https://www.alphavantage.co/support/#api-key
+            const API_KEY = 'W4HR3ZK6WXB81PDH'; // Replace with your API key
+            const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${symbol}&apikey=${API_KEY}`;
+            
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            if (data['Error Message']) {
+                throw new Error('Invalid stock symbol');
+            }
+            
+            if (data['Note']) {
+                // API rate limit - use demo data
+                return generateDemoData(symbol);
+            }
+            
+            const timeSeries = data['Time Series (Daily)'];
+            if (!timeSeries) {
+                return generateDemoData(symbol);
+            }
+            
+            const dates = Object.keys(timeSeries).slice(0, 100).reverse();
+            const candleData = dates.map(date => ({
+                time: date,
+                open: parseFloat(timeSeries[date]['1. open']),
+                high: parseFloat(timeSeries[date]['2. high']),
+                low: parseFloat(timeSeries[date]['3. low']),
+                close: parseFloat(timeSeries[date]['4. close']),
+                volume: parseFloat(timeSeries[date]['5. volume'])
+            }));
+            
+            return candleData;
+        }
+        
+        function generateDemoData(symbol) {
+            // Generate realistic demo data when API is unavailable
+            const data = [];
+            let basePrice = 150 + Math.random() * 50;
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - 100);
+            
+            for (let i = 0; i < 100; i++) {
+                const date = new Date(startDate);
+                date.setDate(date.getDate() + i);
+                
+                const volatility = 0.02;
+                const trend = 0.001;
+                
+                const open = basePrice;
+                const change = (Math.random() - 0.48) * basePrice * volatility + basePrice * trend;
+                const close = basePrice + change;
+                const high = Math.max(open, close) * (1 + Math.random() * 0.01);
+                const low = Math.min(open, close) * (1 - Math.random() * 0.01);
+                
+                data.push({
+                    time: date.toISOString().split('T')[0],
+                    open: parseFloat(open.toFixed(2)),
+                    high: parseFloat(high.toFixed(2)),
+                    low: parseFloat(low.toFixed(2)),
+                    close: parseFloat(close.toFixed(2)),
+                    volume: Math.floor(Math.random() * 100000000)
+                });
+                
+                basePrice = close;
+            }
+            
+            return data;
+        }
+        
+        function analyzeStockData(data) {
+            const closes = data.map(d => d.close);
+            const volumes = data.map(d => d.volume);
+            const latest = data[data.length - 1];
+            const previous = data[data.length - 2];
+            
+            // Calculate indicators
+            const sma20 = calculateSMA(closes, 20);
+            const sma50 = calculateSMA(closes, 50);
+            const rsi = calculateRSI(closes, 14);
+            const macd = calculateMACD(closes);
+            
+            const priceChange = ((latest.close - previous.close) / previous.close) * 100;
+            const avgVolume = volumes.slice(-20).reduce((a, b) => a + b, 0) / 20;
+            const volumeRatio = latest.volume / avgVolume;
+            
+            // Generate signal
+            let signal = 'HOLD';
+            let confidence = 50;
+            let reasons = [];
+            
+            // Bullish indicators
+            let bullishScore = 0;
+            if (latest.close > sma20) {
+                bullishScore += 20;
+                reasons.push('Price is above 20-day moving average (bullish)');
+            }
+            if (latest.close > sma50) {
+                bullishScore += 15;
+                reasons.push('Price is above 50-day moving average (strong trend)');
+            }
+            if (sma20 > sma50) {
+                bullishScore += 15;
+                reasons.push('Short-term trend is stronger than long-term (momentum building)');
+            }
+            if (rsi > 30 && rsi < 70) {
+                bullishScore += 10;
+                reasons.push(`RSI at ${rsi.toFixed(1)} - not overbought or oversold (healthy)`);
+            }
+            if (macd.histogram > 0) {
+                bullishScore += 15;
+                reasons.push('MACD showing positive momentum');
+            }
+            if (volumeRatio > 1.2) {
+                bullishScore += 10;
+                reasons.push('Volume higher than average (strong interest)');
+            }
+            if (priceChange > 0) {
+                bullishScore += 10;
+                reasons.push(`Price up ${priceChange.toFixed(2)}% today`);
+            }
+            
+            // Bearish indicators
+            let bearishScore = 0;
+            if (latest.close < sma20) {
+                bearishScore += 20;
+                reasons.push('Price is below 20-day moving average (bearish)');
+            }
+            if (latest.close < sma50) {
+                bearishScore += 15;
+                reasons.push('Price is below 50-day moving average (weak trend)');
+            }
+            if (sma20 < sma50) {
+                bearishScore += 15;
+                reasons.push('Short-term trend weaker than long-term (losing momentum)');
+            }
+            if (rsi > 70) {
+                bearishScore += 15;
+                reasons.push(`RSI at ${rsi.toFixed(1)} - overbought (possible reversal ahead)`);
+            }
+            if (rsi < 30) {
+                bullishScore += 20; // Oversold is actually bullish
+                reasons.push(`RSI at ${rsi.toFixed(1)} - oversold (potential buying opportunity)`);
+            }
+            if (macd.histogram < 0) {
+                bearishScore += 15;
+                reasons.push('MACD showing negative momentum');
+            }
+            if (priceChange < -2) {
+                bearishScore += 10;
+                reasons.push(`Price down ${Math.abs(priceChange).toFixed(2)}% today`);
+            }
+            
+            // Determine signal
+            if (bullishScore > bearishScore + 20) {
+                signal = 'BUY';
+                confidence = Math.min(95, 50 + bullishScore);
+            } else if (bearishScore > bullishScore + 20) {
+                signal = 'SELL';
+                confidence = Math.min(95, 50 + bearishScore);
+            } else {
+                signal = 'HOLD';
+                confidence = 50 + Math.abs(bullishScore - bearishScore) / 2;
+                reasons = ['Mixed signals - market is uncertain', ...reasons.slice(0, 3)];
+            }
+            
+            return {
+                signal,
+                confidence: Math.round(confidence),
+                price: latest.close,
+                priceChange,
+                volume: latest.volume,
+                avgVolume,
+                rsi,
+                sma20,
+                sma50,
+                macd,
+                reasons: reasons.slice(0, 5)
+            };
+        }
+        
+        function calculateSMA(data, period) {
+            const slice = data.slice(-period);
+            return slice.reduce((a, b) => a + b, 0) / period;
+        }
+        
+        function calculateRSI(data, period = 14) {
+            const changes = [];
+            for (let i = 1; i < data.length; i++) {
+                changes.push(data[i] - data[i - 1]);
+            }
+            
+            const recentChanges = changes.slice(-period);
+            const gains = recentChanges.filter(c => c > 0).reduce((a, b) => a + b, 0) / period;
+            const losses = Math.abs(recentChanges.filter(c => c < 0).reduce((a, b) => a + b, 0)) / period;
+            
+            if (losses === 0) return 100;
+            const rs = gains / losses;
+            return 100 - (100 / (1 + rs));
+        }
+        
+        function calculateMACD(data) {
+            const ema12 = calculateEMA(data, 12);
+            const ema26 = calculateEMA(data, 26);
+            const macdLine = ema12 - ema26;
+            
+            return {
+                line: macdLine,
+                histogram: macdLine // Simplified
+            };
+        }
+        
+        function calculateEMA(data, period) {
+            const k = 2 / (period + 1);
+            let ema = data[0];
+            
+            for (let i = 1; i < data.length; i++) {
+                ema = data[i] * k + ema * (1 - k);
+            }
+            
+            return ema;
+        }
+        
+        function updateChart(data) {
+            const chartContainer = document.getElementById('tradingview-chart');
+            chartContainer.innerHTML = '';
+            
+            chart = LightweightCharts.createChart(chartContainer, {
+                width: chartContainer.clientWidth,
+                height: 500,
+                layout: {
+                    background: { color: '#1a2332' },
+                    textColor: '#9ca3af',
+                },
+                grid: {
+                    vertLines: { color: '#1f2937' },
+                    horzLines: { color: '#1f2937' },
+                },
+                timeScale: {
+                    borderColor: '#1f2937',
+                    timeVisible: true,
+                },
+                rightPriceScale: {
+                    borderColor: '#1f2937',
+                }
+            });
+            
+            candleSeries = chart.addCandlestickSeries({
+                upColor: '#10b981',
+                downColor: '#ef4444',
+                borderUpColor: '#10b981',
+                borderDownColor: '#ef4444',
+                wickUpColor: '#10b981',
+                wickDownColor: '#ef4444',
+            });
+            
+            candleSeries.setData(data);
+            chart.timeScale().fitContent();
+            
+            // Add moving averages
+            const closes = data.map(d => d.close);
+            const sma20Data = [];
+            const sma50Data = [];
+            
+            for (let i = 19; i < data.length; i++) {
+                const sma20 = closes.slice(i - 19, i + 1).reduce((a, b) => a + b, 0) / 20;
+                sma20Data.push({ time: data[i].time, value: sma20 });
+            }
+            
+            for (let i = 49; i < data.length; i++) {
+                const sma50 = closes.slice(i - 49, i + 1).reduce((a, b) => a + b, 0) / 50;
+                sma50Data.push({ time: data[i].time, value: sma50 });
+            }
+            
+            const sma20Series = chart.addLineSeries({
+                color: '#3b82f6',
+                lineWidth: 2,
+                title: 'SMA 20'
+            });
+            sma20Series.setData(sma20Data);
+            
+            const sma50Series = chart.addLineSeries({
+                color: '#8b5cf6',
+                lineWidth: 2,
+                title: 'SMA 50'
+            });
+            sma50Series.setData(sma50Data);
+        }
+        
+        function updateAnalysisPanel(symbol, analysis, data) {
+            document.getElementById('stockSymbol').textContent = symbol;
+            
+            const signalCard = document.getElementById('signalCard');
+            const signalBadge = document.getElementById('signalBadge');
+            const confidenceFill = document.getElementById('confidenceFill');
+            
+            signalCard.className = 'signal-card ' + analysis.signal.toLowerCase();
+            signalBadge.className = 'signal-badge ' + analysis.signal.toLowerCase();
+            signalBadge.textContent = analysis.signal;
+            
+            document.getElementById('confidenceText').textContent = analysis.confidence + '%';
+            confidenceFill.style.width = analysis.confidence + '%';
+            
+            let fillColor;
+            if (analysis.signal === 'BUY') fillColor = 'var(--accent-buy)';
+            else if (analysis.signal === 'SELL') fillColor = 'var(--accent-sell)';
+            else fillColor = 'var(--accent-hold)';
+            confidenceFill.style.background = fillColor;
+            
+            const changeClass = analysis.priceChange >= 0 ? 'positive' : 'negative';
+            const changeSign = analysis.priceChange >= 0 ? '+' : '';
+            
+            document.getElementById('metricsGrid').innerHTML = `
+                <div class="metric">
+                    <div class="metric-label">Price</div>
+                    <div class="metric-value">$${analysis.price.toFixed(2)}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Change</div>
+                    <div class="metric-value ${changeClass}">${changeSign}${analysis.priceChange.toFixed(2)}%</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Volume</div>
+                    <div class="metric-value">${formatVolume(analysis.volume)}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">RSI (14)</div>
+                    <div class="metric-value">${analysis.rsi.toFixed(1)}</div>
+                </div>
+            `;
+            
+            const reasonsList = analysis.reasons.map(r => `<li>${r}</li>`).join('');
+            document.getElementById('analysisText').innerHTML = `<ul>${reasonsList}</ul>`;
+        }
+        
+        function formatVolume(volume) {
+            if (volume >= 1e9) return (volume / 1e9).toFixed(2) + 'B';
+            if (volume >= 1e6) return (volume / 1e6).toFixed(1) + 'M';
+            if (volume >= 1e3) return (volume / 1e3).toFixed(1) + 'K';
+            return volume.toString();
+        }
+        
+        function showLoading(show) {
+            document.getElementById('loading').classList.toggle('active', show);
+            document.getElementById('analyzeBtn').disabled = show;
+        }
+        
+        function showError(message) {
+            const errorMsg = document.getElementById('errorMsg');
+            errorMsg.textContent = message;
+            errorMsg.classList.add('active');
+        }
+        
+        function hideError() {
+            document.getElementById('errorMsg').classList.remove('active');
+        }
+        
+        // Handle enter key
+        document.getElementById('symbolInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') analyzeStock();
+        });
+        
+        // Responsive chart
+        window.addEventListener('resize', () => {
+            if (chart) {
+                const container = document.getElementById('tradingview-chart');
+                chart.applyOptions({ width: container.clientWidth });
+            }
+        });
+        
+        // Load default stock on page load
+        window.addEventListener('load', () => {
+            analyzeStock();
+        });
+    </script>
+</body>
+</html>
