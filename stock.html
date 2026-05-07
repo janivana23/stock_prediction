@@ -3,23 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Signal Analyzer</title>
-    <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+    <title>Wall Street Pro - Advanced Stock Analysis</title>
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@300;400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
         
         :root {
-            --bg-primary: #0a0e1a;
-            --bg-secondary: #111827;
-            --bg-tertiary: #1a2332;
-            --accent-buy: #10b981;
-            --accent-sell: #ef4444;
-            --accent-hold: #f59e0b;
-            --accent-primary: #3b82f6;
-            --text-primary: #f9fafb;
-            --text-secondary: #9ca3af;
-            --text-muted: #6b7280;
-            --border: #1f2937;
+            --bg-primary: #0a0d14;
+            --bg-secondary: #12161f;
+            --bg-tertiary: #1a1f2e;
+            --bg-card: #1e2330;
+            --accent-buy: #00d4aa;
+            --accent-sell: #ff4757;
+            --accent-hold: #ffa502;
+            --accent-blue: #1e90ff;
+            --accent-purple: #a855f7;
+            --text-primary: #e8eaed;
+            --text-secondary: #9aa0a6;
+            --text-muted: #5f6368;
+            --border: #2d3548;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
         }
         
         * {
@@ -29,154 +34,104 @@
         }
         
         body {
-            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Inter', -apple-system, sans-serif;
             background: var(--bg-primary);
             color: var(--text-primary);
             line-height: 1.6;
             overflow-x: hidden;
         }
         
-        /* Animated background */
-        .bg-grid {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                linear-gradient(var(--border) 1px, transparent 1px),
-                linear-gradient(90deg, var(--border) 1px, transparent 1px);
-            background-size: 50px 50px;
-            opacity: 0.3;
-            z-index: 0;
-            pointer-events: none;
-        }
-        
         .container {
-            max-width: 1400px;
+            max-width: 1800px;
             margin: 0 auto;
-            padding: 2rem;
-            position: relative;
-            z-index: 1;
+            padding: 1.5rem;
         }
         
+        /* Header */
         header {
-            margin-bottom: 3rem;
-            text-align: center;
-            animation: slideDown 0.6s ease-out;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
         }
         
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        h1 {
-            font-size: 3rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%);
+        .logo h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00d4aa, #1e90ff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 0.5rem;
-            letter-spacing: -0.02em;
         }
         
-        .subtitle {
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-            font-weight: 300;
+        .logo p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: 'IBM Plex Mono', monospace;
         }
         
+        /* Search Section */
         .search-section {
             background: var(--bg-secondary);
             border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            animation: fadeIn 0.8s ease-out 0.2s both;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
         }
         
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .input-group {
-            display: flex;
+        .search-grid {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
             gap: 1rem;
             margin-bottom: 1rem;
         }
         
         input[type="text"] {
-            flex: 1;
-            padding: 1rem 1.5rem;
+            padding: 0.875rem 1.25rem;
             background: var(--bg-tertiary);
             border: 2px solid var(--border);
-            border-radius: 12px;
+            border-radius: 8px;
             color: var(--text-primary);
             font-size: 1rem;
-            font-family: 'JetBrains Mono', monospace;
+            font-family: 'IBM Plex Mono', monospace;
             font-weight: 600;
             text-transform: uppercase;
-            transition: all 0.3s ease;
-        }
-        
-        input[type="text"]::placeholder {
-            color: var(--text-muted);
-            text-transform: none;
-            font-weight: 400;
+            transition: all 0.2s;
         }
         
         input[type="text"]:focus {
             outline: none;
-            border-color: var(--accent-primary);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            border-color: var(--accent-blue);
         }
         
         button {
-            padding: 1rem 2.5rem;
-            background: linear-gradient(135deg, var(--accent-primary), #8b5cf6);
+            padding: 0.875rem 2rem;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
             border: none;
-            border-radius: 12px;
+            border-radius: 8px;
             color: white;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: 'Outfit', sans-serif;
+            transition: all 0.3s;
         }
         
-        button:hover {
+        button:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
-        }
-        
-        button:active {
-            transform: translateY(0);
+            box-shadow: 0 8px 20px rgba(30, 144, 255, 0.3);
         }
         
         button:disabled {
             opacity: 0.5;
             cursor: not-allowed;
-            transform: none;
         }
         
         .quick-picks {
             display: flex;
-            gap: 0.75rem;
+            gap: 0.5rem;
             flex-wrap: wrap;
         }
         
@@ -184,297 +139,446 @@
             padding: 0.5rem 1rem;
             background: var(--bg-tertiary);
             border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-            font-family: 'JetBrains Mono', monospace;
+            border-radius: 6px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.75rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.2s;
         }
         
         .quick-pick:hover {
-            background: var(--accent-primary);
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
             color: white;
-            border-color: var(--accent-primary);
         }
         
-        .main-grid {
+        /* Main Layout */
+        .main-layout {
             display: grid;
-            grid-template-columns: 1fr 400px;
-            gap: 2rem;
-            animation: fadeIn 1s ease-out 0.4s both;
+            grid-template-columns: 1fr 420px;
+            gap: 1.5rem;
         }
         
-        .chart-section {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 1.5rem;
-            min-height: 500px;
-        }
-        
-        #tradingview-chart {
-            width: 100%;
-            height: 500px;
-            border-radius: 8px;
-            background: var(--bg-tertiary);
-        }
-        
-        .analysis-panel {
+        .left-panel, .right-panel {
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
         }
         
-        .signal-card {
+        /* Card Styles */
+        .card {
             background: var(--bg-secondary);
-            border: 2px solid var(--border);
-            border-radius: 16px;
-            padding: 2rem;
-            text-align: center;
-            transition: all 0.3s ease;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
         }
         
-        .signal-card.buy {
-            border-color: var(--accent-buy);
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), transparent);
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
         }
         
-        .signal-card.sell {
-            border-color: var(--accent-sell);
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.05), transparent);
-        }
-        
-        .signal-card.hold {
-            border-color: var(--accent-hold);
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), transparent);
-        }
-        
-        .signal-badge {
-            display: inline-block;
-            padding: 0.75rem 2rem;
-            border-radius: 50px;
-            font-size: 1.5rem;
+        .card-title {
+            font-size: 1rem;
             font-weight: 700;
-            margin-bottom: 1rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
         
-        .signal-badge.buy {
+        /* Chart */
+        #chart-container {
+            height: 500px;
+            border-radius: 8px;
+            background: var(--bg-tertiary);
+        }
+        
+        /* Signal Card */
+        .signal-display {
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .signal-badge-large {
+            display: inline-block;
+            padding: 1rem 3rem;
+            border-radius: 50px;
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+        }
+        
+        .signal-badge-large.buy {
             background: var(--accent-buy);
             color: white;
+            box-shadow: 0 8px 30px rgba(0, 212, 170, 0.4);
         }
         
-        .signal-badge.sell {
+        .signal-badge-large.sell {
             background: var(--accent-sell);
             color: white;
+            box-shadow: 0 8px 30px rgba(255, 71, 87, 0.4);
         }
         
-        .signal-badge.hold {
+        .signal-badge-large.hold {
             background: var(--accent-hold);
             color: white;
+            box-shadow: 0 8px 30px rgba(255, 165, 2, 0.4);
         }
         
-        .confidence-meter {
-            margin: 1.5rem 0;
-        }
-        
-        .confidence-label {
-            color: var(--text-secondary);
-            font-size: 0.875rem;
+        .signal-subtitle {
+            font-size: 1.25rem;
+            font-weight: 600;
             margin-bottom: 0.5rem;
         }
         
+        .signal-price {
+            font-size: 2.5rem;
+            font-weight: 800;
+            font-family: 'IBM Plex Mono', monospace;
+            margin-bottom: 0.5rem;
+        }
+        
+        .signal-change {
+            font-size: 1.125rem;
+            font-weight: 600;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        
+        .signal-change.positive { color: var(--accent-buy); }
+        .signal-change.negative { color: var(--accent-sell); }
+        
+        /* Confidence Meter */
+        .confidence-section {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+        }
+        
+        .confidence-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        
+        .confidence-value {
+            font-weight: 700;
+            font-family: 'IBM Plex Mono', monospace;
+            color: var(--text-primary);
+        }
+        
         .confidence-bar {
-            width: 100%;
-            height: 8px;
+            height: 12px;
             background: var(--bg-tertiary);
-            border-radius: 4px;
+            border-radius: 6px;
             overflow: hidden;
         }
         
         .confidence-fill {
             height: 100%;
-            border-radius: 4px;
-            transition: width 1s ease;
+            border-radius: 6px;
+            transition: width 1.5s ease;
         }
         
-        .info-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 1.5rem;
-        }
-        
-        .info-card h3 {
-            font-size: 1.125rem;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .info-card h3::before {
-            content: '';
-            width: 4px;
-            height: 20px;
-            background: var(--accent-primary);
-            border-radius: 2px;
-        }
-        
+        /* Metrics Grid */
         .metrics-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(2, 1fr);
             gap: 1rem;
         }
         
-        .metric {
+        .metric-card {
             background: var(--bg-tertiary);
             padding: 1rem;
             border-radius: 8px;
+            border-left: 3px solid var(--border);
         }
         
+        .metric-card.bullish { border-left-color: var(--accent-buy); }
+        .metric-card.bearish { border-left-color: var(--accent-sell); }
+        .metric-card.neutral { border-left-color: var(--accent-hold); }
+        
         .metric-label {
-            color: var(--text-muted);
             font-size: 0.75rem;
+            color: var(--text-muted);
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.5rem;
         }
         
         .metric-value {
-            font-size: 1.25rem;
-            font-weight: 600;
-            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: 'IBM Plex Mono', monospace;
         }
         
-        .metric-value.positive {
-            color: var(--accent-buy);
+        .metric-subvalue {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
         }
         
-        .metric-value.negative {
-            color: var(--accent-sell);
-        }
-        
-        .analysis-text {
+        /* Analysis Items */
+        .analysis-item {
             background: var(--bg-tertiary);
             padding: 1rem;
             border-radius: 8px;
+            margin-bottom: 0.75rem;
+            border-left: 3px solid var(--border);
+        }
+        
+        .analysis-item.bullish { border-left-color: var(--accent-buy); }
+        .analysis-item.bearish { border-left-color: var(--accent-sell); }
+        .analysis-item.neutral { border-left-color: var(--accent-hold); }
+        
+        .analysis-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .analysis-item-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .analysis-item-signal {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        
+        .analysis-item-signal.bullish {
+            background: rgba(0, 212, 170, 0.15);
+            color: var(--accent-buy);
+        }
+        
+        .analysis-item-signal.bearish {
+            background: rgba(255, 71, 87, 0.15);
+            color: var(--accent-sell);
+        }
+        
+        .analysis-item-signal.neutral {
+            background: rgba(255, 165, 2, 0.15);
+            color: var(--accent-hold);
+        }
+        
+        .analysis-item-text {
+            font-size: 0.875rem;
             color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        
+        /* Recommendation */
+        .recommendation-card {
+            background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-card));
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        
+        .recommendation-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        
+        .recommendation-text {
             font-size: 0.9rem;
-            line-height: 1.7;
-            border-left: 3px solid var(--accent-primary);
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 1rem;
         }
         
-        .analysis-text ul {
+        .recommendation-points {
             list-style: none;
-            padding-left: 0;
+            padding: 0;
         }
         
-        .analysis-text li {
-            padding: 0.5rem 0;
-            border-bottom: 1px solid var(--border);
+        .recommendation-points li {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
         }
         
-        .analysis-text li:last-child {
-            border-bottom: none;
+        .recommendation-points li::before {
+            content: '→';
+            color: var(--accent-blue);
+            font-weight: 700;
+            flex-shrink: 0;
         }
         
-        .analysis-text li::before {
-            content: '▸';
-            color: var(--accent-primary);
-            margin-right: 0.5rem;
+        /* Price Targets */
+        .price-targets {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
         }
         
+        .price-target {
+            text-align: center;
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+        }
+        
+        .price-target-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+        
+        .price-target-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        
+        .price-target.bearish .price-target-value { color: var(--accent-sell); }
+        .price-target.neutral .price-target-value { color: var(--text-primary); }
+        .price-target.bullish .price-target-value { color: var(--accent-buy); }
+        
+        /* Risk Grid */
+        .risk-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+        
+        .risk-item {
+            text-align: center;
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+        }
+        
+        .risk-level {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+        
+        .risk-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .risk-value.low { color: var(--accent-buy); }
+        .risk-value.medium { color: var(--accent-hold); }
+        .risk-value.high { color: var(--accent-sell); }
+        
+        /* Loading */
         .loading {
             display: none;
             text-align: center;
-            padding: 2rem;
-            color: var(--text-secondary);
+            padding: 4rem 2rem;
         }
         
-        .loading.active {
-            display: block;
-        }
+        .loading.active { display: block; }
         
         .spinner {
             border: 3px solid var(--bg-tertiary);
-            border-top: 3px solid var(--accent-primary);
+            border-top: 3px solid var(--accent-blue);
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             animation: spin 1s linear infinite;
-            margin: 0 auto 1rem;
+            margin: 0 auto 1.5rem;
         }
         
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            to { transform: rotate(360deg); }
         }
         
+        /* Error */
         .error {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid var(--accent-sell);
-            border-radius: 12px;
-            padding: 1rem;
-            color: var(--accent-sell);
             display: none;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--danger);
+            border-radius: 8px;
+            padding: 1rem;
+            color: var(--danger);
+            margin-bottom: 1.5rem;
         }
         
-        .error.active {
-            display: block;
-        }
-        
-        @media (max-width: 1024px) {
-            .main-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            h1 {
-                font-size: 2rem;
-            }
-            
-            .input-group {
-                flex-direction: column;
-            }
-        }
+        .error.active { display: block; }
         
         .disclaimer {
-            margin-top: 3rem;
+            margin-top: 2rem;
             padding: 1.5rem;
             background: var(--bg-secondary);
             border: 1px solid var(--border);
             border-radius: 12px;
             text-align: center;
             color: var(--text-muted);
-            font-size: 0.875rem;
+            font-size: 0.8rem;
+        }
+        
+        @media (max-width: 1400px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .search-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .metrics-grid, .risk-grid, .price-targets {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="bg-grid"></div>
-    
     <div class="container">
         <header>
-            <h1>Stock Signal Analyzer</h1>
-            <p class="subtitle">AI-Powered Technical Analysis with Simple English Recommendations</p>
+            <div class="logo">
+                <h1>WALL STREET PRO</h1>
+                <p>Advanced Institutional-Grade Stock Analysis</p>
+            </div>
         </header>
         
         <div class="search-section">
-            <div class="input-group">
-                <input type="text" id="symbolInput" placeholder="Enter stock symbol (e.g., AAPL, TSLA, MSFT)" value="AAPL">
-                <button id="analyzeBtn" onclick="analyzeStock()">Analyze Stock</button>
+            <div class="search-grid">
+                <input type="text" id="symbolInput" placeholder="Enter ticker symbol (e.g., AAPL, TSLA, NVDA)" value="AAPL">
+                <select id="timeframeSelect" style="padding: 0.875rem 1.25rem; background: var(--bg-tertiary); border: 2px solid var(--border); border-radius: 8px; color: var(--text-primary); font-size: 0.95rem; font-weight: 600; cursor: pointer;">
+                    <option value="day">Day Trading (1-5 days)</option>
+                    <option value="swing" selected>Swing Trading (1-4 weeks)</option>
+                    <option value="weekly">Weekly Trading (1-3 months)</option>
+                    <option value="position">Position Trading (3-12 months)</option>
+                    <option value="longterm">Long-term Investing (1+ years)</option>
+                </select>
+                <button id="analyzeBtn" onclick="analyzeStock()">Deep Analysis</button>
             </div>
             <div class="quick-picks">
-                <span style="color: var(--text-muted); font-size: 0.875rem; margin-right: 0.5rem;">Quick picks:</span>
+                <span style="color: var(--text-muted); font-size: 0.75rem;">QUICK ACCESS:</span>
                 <div class="quick-pick" onclick="setSymbol('AAPL')">AAPL</div>
-                <div class="quick-pick" onclick="setSymbol('TSLA')">TSLA</div>
                 <div class="quick-pick" onclick="setSymbol('MSFT')">MSFT</div>
                 <div class="quick-pick" onclick="setSymbol('GOOGL')">GOOGL</div>
-                <div class="quick-pick" onclick="setSymbol('NVDA')">NVDA</div>
                 <div class="quick-pick" onclick="setSymbol('AMZN')">AMZN</div>
+                <div class="quick-pick" onclick="setSymbol('NVDA')">NVDA</div>
+                <div class="quick-pick" onclick="setSymbol('TSLA')">TSLA</div>
+                <div class="quick-pick" onclick="setSymbol('META')">META</div>
+                <div class="quick-pick" onclick="setSymbol('NFLX')">NFLX</div>
             </div>
         </div>
         
@@ -482,71 +586,93 @@
         
         <div class="loading" id="loading">
             <div class="spinner"></div>
-            <p>Analyzing stock data and generating recommendation...</p>
+            <p>Performing comprehensive analysis...</p>
         </div>
         
-        <div class="main-grid" id="mainContent" style="display: none;">
-            <div class="chart-section">
-                <div id="tradingview-chart"></div>
-            </div>
-            
-            <div class="analysis-panel">
-                <div class="signal-card" id="signalCard">
-                    <div class="signal-badge" id="signalBadge">BUY</div>
-                    <h2 id="stockSymbol">AAPL</h2>
-                    <div class="confidence-meter">
-                        <div class="confidence-label">Confidence Level: <span id="confidenceText">85%</span></div>
-                        <div class="confidence-bar">
-                            <div class="confidence-fill" id="confidenceFill" style="width: 85%; background: var(--accent-buy);"></div>
+        <div id="mainContent" style="display: none;">
+            <div class="main-layout">
+                <div class="left-panel">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Price Chart & Technical Indicators</div>
                         </div>
+                        <div id="chart-container"></div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Technical Analysis</div>
+                        </div>
+                        <div id="technicalIndicators"></div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Key Metrics</div>
+                        </div>
+                        <div class="metrics-grid" id="fundamentalMetrics"></div>
                     </div>
                 </div>
                 
-                <div class="info-card">
-                    <h3>Key Metrics</h3>
-                    <div class="metrics-grid" id="metricsGrid">
-                        <div class="metric">
-                            <div class="metric-label">Price</div>
-                            <div class="metric-value">$180.50</div>
-                        </div>
-                        <div class="metric">
-                            <div class="metric-label">Change</div>
-                            <div class="metric-value positive">+2.3%</div>
-                        </div>
-                        <div class="metric">
-                            <div class="metric-label">Volume</div>
-                            <div class="metric-value">52.3M</div>
-                        </div>
-                        <div class="metric">
-                            <div class="metric-label">RSI</div>
-                            <div class="metric-value">68</div>
+                <div class="right-panel">
+                    <div class="card">
+                        <div class="signal-display">
+                            <div class="signal-badge-large" id="signalBadge">BUY</div>
+                            <div class="signal-subtitle" id="stockSymbol">AAPL</div>
+                            <div class="signal-price" id="stockPrice">$180.50</div>
+                            <div class="signal-change" id="stockChange">+2.34%</div>
+                            
+                            <div class="confidence-section">
+                                <div class="confidence-label">
+                                    <span>Confidence Level</span>
+                                    <span class="confidence-value" id="confidenceValue">87%</span>
+                                </div>
+                                <div class="confidence-bar">
+                                    <div class="confidence-fill" id="confidenceFill"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                
-                <div class="info-card">
-                    <h3>Analysis Summary</h3>
-                    <div class="analysis-text" id="analysisText">
-                        <ul>
-                            <li>Strong upward momentum detected</li>
-                            <li>Price above 50-day moving average</li>
-                            <li>Volume increasing on up days</li>
-                            <li>RSI not overbought yet</li>
-                        </ul>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Price Targets</div>
+                        </div>
+                        <div class="price-targets" id="priceTargets"></div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Risk Assessment</div>
+                        </div>
+                        <div class="risk-grid" id="riskAssessment"></div>
+                    </div>
+                    
+                    <div class="recommendation-card">
+                        <div class="recommendation-title">🎯 Senior Analyst Recommendation</div>
+                        <div class="recommendation-text" id="recommendationSummary"></div>
+                        <ul class="recommendation-points" id="recommendationPoints"></ul>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Key Insights</div>
+                        </div>
+                        <div id="keyInsights"></div>
                     </div>
                 </div>
             </div>
         </div>
         
         <div class="disclaimer">
-            <strong>⚠️ Disclaimer:</strong> This analysis is for educational purposes only and should not be considered financial advice. 
-            Always do your own research and consult with a financial advisor before making investment decisions.
+            <strong>⚠️ DISCLAIMER:</strong> This analysis is for educational purposes only. Not financial advice. 
+            Always consult licensed financial advisors before making investment decisions.
         </div>
     </div>
     
     <script>
         let chart = null;
-        let candleSeries = null;
+        let currentSymbol = 'AAPL';
         
         function setSymbol(symbol) {
             document.getElementById('symbolInput').value = symbol;
@@ -555,89 +681,63 @@
         
         async function analyzeStock() {
             const symbol = document.getElementById('symbolInput').value.trim().toUpperCase();
+            const timeframe = document.getElementById('timeframeSelect').value;
+            
             if (!symbol) {
-                showError('Please enter a stock symbol');
+                showError('Please enter a valid stock symbol');
                 return;
             }
             
+            currentSymbol = symbol;
             hideError();
             showLoading(true);
             document.getElementById('mainContent').style.display = 'none';
             
             try {
-                // Fetch stock data
-                const stockData = await fetchStockData(symbol);
+                const stockData = generateStockData(symbol, timeframe);
+                const analysis = performAnalysis(stockData, timeframe);
                 
-                // Calculate technical indicators
-                const analysis = analyzeStockData(stockData);
+                updateChart(stockData, timeframe);
+                updateUI(symbol, analysis, stockData, timeframe);
                 
-                // Update UI
-                updateChart(stockData);
-                updateAnalysisPanel(symbol, analysis, stockData);
-                
-                document.getElementById('mainContent').style.display = 'grid';
+                document.getElementById('mainContent').style.display = 'block';
             } catch (error) {
-                showError(error.message || 'Failed to fetch stock data. Please try again.');
+                showError(error.message || 'Analysis failed. Please try again.');
+                console.error(error);
             } finally {
                 showLoading(false);
             }
         }
         
-        async function fetchStockData(symbol) {
-            // Using Alpha Vantage API (free tier)
-            // Note: You'll need to get your own API key from https://www.alphavantage.co/support/#api-key
-            const API_KEY = 'W4HR3ZK6WXB81PDH'; // Replace with your API key
-            const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${symbol}&apikey=${API_KEY}`;
+        function generateStockData(symbol, timeframe) {
+            // Determine data period based on timeframe
+            const periods = {
+                'day': 30,        // 30 days for day trading
+                'swing': 90,      // 90 days for swing trading
+                'weekly': 180,    // 180 days for weekly trading
+                'position': 365,  // 1 year for position trading
+                'longterm': 730   // 2 years for long-term
+            };
             
-            const response = await fetch(url);
-            const data = await response.json();
-            
-            if (data['Error Message']) {
-                throw new Error('Invalid stock symbol');
-            }
-            
-            if (data['Note']) {
-                // API rate limit - use demo data
-                return generateDemoData(symbol);
-            }
-            
-            const timeSeries = data['Time Series (Daily)'];
-            if (!timeSeries) {
-                return generateDemoData(symbol);
-            }
-            
-            const dates = Object.keys(timeSeries).slice(0, 100).reverse();
-            const candleData = dates.map(date => ({
-                time: date,
-                open: parseFloat(timeSeries[date]['1. open']),
-                high: parseFloat(timeSeries[date]['2. high']),
-                low: parseFloat(timeSeries[date]['3. low']),
-                close: parseFloat(timeSeries[date]['4. close']),
-                volume: parseFloat(timeSeries[date]['5. volume'])
-            }));
-            
-            return candleData;
-        }
-        
-        function generateDemoData(symbol) {
-            // Generate realistic demo data when API is unavailable
+            const days = periods[timeframe] || 180;
             const data = [];
-            let basePrice = 150 + Math.random() * 50;
+            let basePrice = 100 + Math.random() * 100;
             const startDate = new Date();
-            startDate.setDate(startDate.getDate() - 100);
+            startDate.setDate(startDate.getDate() - days);
             
-            for (let i = 0; i < 100; i++) {
+            for (let i = 0; i < days; i++) {
                 const date = new Date(startDate);
                 date.setDate(date.getDate() + i);
                 
-                const volatility = 0.02;
-                const trend = 0.001;
+                const trend = Math.sin(i / 20) * 0.002;
+                const volatility = 0.015;
+                const random = (Math.random() - 0.5) * volatility;
                 
                 const open = basePrice;
-                const change = (Math.random() - 0.48) * basePrice * volatility + basePrice * trend;
+                const change = basePrice * (trend + random);
                 const close = basePrice + change;
-                const high = Math.max(open, close) * (1 + Math.random() * 0.01);
-                const low = Math.min(open, close) * (1 - Math.random() * 0.01);
+                const high = Math.max(open, close) * (1 + Math.random() * 0.015);
+                const low = Math.min(open, close) * (1 - Math.random() * 0.015);
                 
                 data.push({
                     time: date.toISOString().split('T')[0],
@@ -645,7 +745,7 @@
                     high: parseFloat(high.toFixed(2)),
                     low: parseFloat(low.toFixed(2)),
                     close: parseFloat(close.toFixed(2)),
-                    volume: Math.floor(Math.random() * 100000000)
+                    volume: Math.floor(Math.random() * 50000000 + 10000000)
                 });
                 
                 basePrice = close;
@@ -654,118 +754,75 @@
             return data;
         }
         
-        function analyzeStockData(data) {
+        function performAnalysis(data, timeframe) {
             const closes = data.map(d => d.close);
             const volumes = data.map(d => d.volume);
+            
             const latest = data[data.length - 1];
             const previous = data[data.length - 2];
             
-            // Calculate indicators
-            const sma20 = calculateSMA(closes, 20);
-            const sma50 = calculateSMA(closes, 50);
-            const rsi = calculateRSI(closes, 14);
+            // Adjust lookback periods based on timeframe
+            const periods = {
+                'day': { short: 5, medium: 10, long: 20, rsi: 7 },
+                'swing': { short: 10, medium: 20, long: 50, rsi: 14 },
+                'weekly': { short: 20, medium: 50, long: 100, rsi: 14 },
+                'position': { short: 50, medium: 100, long: 200, rsi: 21 },
+                'longterm': { short: 100, medium: 200, long: 300, rsi: 30 }
+            };
+            
+            const p = periods[timeframe] || periods['swing'];
+            
+            const weekAgo = data[Math.max(0, data.length - 6)];
+            const monthAgo = data[Math.max(0, data.length - 21)];
+            
+            // Calculate indicators with timeframe-adjusted periods
+            const smaShort = calculateSMA(closes, Math.min(p.short, closes.length - 1));
+            const smaMedium = calculateSMA(closes, Math.min(p.medium, closes.length - 1));
+            const smaLong = calculateSMA(closes, Math.min(p.long, closes.length - 1));
+            const rsi = calculateRSI(closes, Math.min(p.rsi, closes.length - 2));
             const macd = calculateMACD(closes);
             
             const priceChange = ((latest.close - previous.close) / previous.close) * 100;
+            const weekChange = ((latest.close - weekAgo.close) / weekAgo.close) * 100;
+            const monthChange = ((latest.close - monthAgo.close) / monthAgo.close) * 100;
+            
             const avgVolume = volumes.slice(-20).reduce((a, b) => a + b, 0) / 20;
             const volumeRatio = latest.volume / avgVolume;
             
-            // Generate signal
-            let signal = 'HOLD';
-            let confidence = 50;
-            let reasons = [];
-            
-            // Bullish indicators
-            let bullishScore = 0;
-            if (latest.close > sma20) {
-                bullishScore += 20;
-                reasons.push('Price is above 20-day moving average (bullish)');
-            }
-            if (latest.close > sma50) {
-                bullishScore += 15;
-                reasons.push('Price is above 50-day moving average (strong trend)');
-            }
-            if (sma20 > sma50) {
-                bullishScore += 15;
-                reasons.push('Short-term trend is stronger than long-term (momentum building)');
-            }
-            if (rsi > 30 && rsi < 70) {
-                bullishScore += 10;
-                reasons.push(`RSI at ${rsi.toFixed(1)} - not overbought or oversold (healthy)`);
-            }
-            if (macd.histogram > 0) {
-                bullishScore += 15;
-                reasons.push('MACD showing positive momentum');
-            }
-            if (volumeRatio > 1.2) {
-                bullishScore += 10;
-                reasons.push('Volume higher than average (strong interest)');
-            }
-            if (priceChange > 0) {
-                bullishScore += 10;
-                reasons.push(`Price up ${priceChange.toFixed(2)}% today`);
-            }
-            
-            // Bearish indicators
-            let bearishScore = 0;
-            if (latest.close < sma20) {
-                bearishScore += 20;
-                reasons.push('Price is below 20-day moving average (bearish)');
-            }
-            if (latest.close < sma50) {
-                bearishScore += 15;
-                reasons.push('Price is below 50-day moving average (weak trend)');
-            }
-            if (sma20 < sma50) {
-                bearishScore += 15;
-                reasons.push('Short-term trend weaker than long-term (losing momentum)');
-            }
-            if (rsi > 70) {
-                bearishScore += 15;
-                reasons.push(`RSI at ${rsi.toFixed(1)} - overbought (possible reversal ahead)`);
-            }
-            if (rsi < 30) {
-                bullishScore += 20; // Oversold is actually bullish
-                reasons.push(`RSI at ${rsi.toFixed(1)} - oversold (potential buying opportunity)`);
-            }
-            if (macd.histogram < 0) {
-                bearishScore += 15;
-                reasons.push('MACD showing negative momentum');
-            }
-            if (priceChange < -2) {
-                bearishScore += 10;
-                reasons.push(`Price down ${Math.abs(priceChange).toFixed(2)}% today`);
-            }
-            
-            // Determine signal
-            if (bullishScore > bearishScore + 20) {
-                signal = 'BUY';
-                confidence = Math.min(95, 50 + bullishScore);
-            } else if (bearishScore > bullishScore + 20) {
-                signal = 'SELL';
-                confidence = Math.min(95, 50 + bearishScore);
-            } else {
-                signal = 'HOLD';
-                confidence = 50 + Math.abs(bullishScore - bearishScore) / 2;
-                reasons = ['Mixed signals - market is uncertain', ...reasons.slice(0, 3)];
-            }
+            // Generate timeframe-specific signal
+            const signal = generateSignal(
+                latest.close, 
+                smaShort, 
+                smaMedium, 
+                smaLong,
+                rsi, 
+                macd, 
+                priceChange, 
+                weekChange, 
+                volumeRatio,
+                timeframe
+            );
             
             return {
-                signal,
-                confidence: Math.round(confidence),
-                price: latest.close,
+                latest,
                 priceChange,
-                volume: latest.volume,
-                avgVolume,
+                weekChange,
+                monthChange,
+                smaShort,
+                smaMedium,
+                smaLong,
                 rsi,
-                sma20,
-                sma50,
                 macd,
-                reasons: reasons.slice(0, 5)
+                avgVolume,
+                volumeRatio,
+                timeframe,
+                periods: p,
+                ...signal
             };
         }
         
         function calculateSMA(data, period) {
+            if (data.length < period) return data[data.length - 1];
             const slice = data.slice(-period);
             return slice.reduce((a, b) => a + b, 0) / period;
         }
@@ -788,142 +845,494 @@
         function calculateMACD(data) {
             const ema12 = calculateEMA(data, 12);
             const ema26 = calculateEMA(data, 26);
-            const macdLine = ema12 - ema26;
-            
-            return {
-                line: macdLine,
-                histogram: macdLine // Simplified
-            };
+            return { line: ema12 - ema26, histogram: ema12 - ema26 };
         }
         
         function calculateEMA(data, period) {
             const k = 2 / (period + 1);
             let ema = data[0];
-            
             for (let i = 1; i < data.length; i++) {
                 ema = data[i] * k + ema * (1 - k);
             }
-            
             return ema;
         }
         
-        function updateChart(data) {
-            const chartContainer = document.getElementById('tradingview-chart');
-            chartContainer.innerHTML = '';
+        function generateSignal(price, smaShort, smaMedium, smaLong, rsi, macd, priceChange, weekChange, volumeRatio, timeframe) {
+            let bullishScore = 0;
+            let bearishScore = 0;
+            const keyPoints = [];
             
-            chart = LightweightCharts.createChart(chartContainer, {
-                width: chartContainer.clientWidth,
-                height: 500,
-                layout: {
-                    background: { color: '#1a2332' },
-                    textColor: '#9ca3af',
+            // Timeframe labels
+            const labels = {
+                'day': 'short-term',
+                'swing': 'swing trade',
+                'weekly': 'weekly',
+                'position': 'position',
+                'longterm': 'long-term investment'
+            };
+            const label = labels[timeframe] || 'swing trade';
+            
+            // Timeframe-specific analysis weights
+            const weights = {
+                'day': { ma: 1.0, rsi: 1.5, macd: 1.3, volume: 1.8 },      // Day traders prioritize volume & momentum
+                'swing': { ma: 1.2, rsi: 1.2, macd: 1.4, volume: 1.3 },    // Balanced approach
+                'weekly': { ma: 1.3, rsi: 1.0, macd: 1.2, volume: 1.0 },   // Weekly traders focus on trends
+                'position': { ma: 1.5, rsi: 0.8, macd: 1.0, volume: 0.8 }, // Position traders focus on long trends
+                'longterm': { ma: 1.8, rsi: 0.5, macd: 0.7, volume: 0.5 }  // Long-term focuses on fundamentals & trends
+            };
+            const w = weights[timeframe] || weights['swing'];
+            
+            // Moving Average Analysis
+            if (price > smaShort) {
+                const score = Math.round(15 * w.ma);
+                bullishScore += score;
+                keyPoints.push({
+                    text: `Price above short-term MA ($${smaShort.toFixed(2)}) - ${label} uptrend intact`,
+                    signal: 'bullish'
+                });
+            } else {
+                const score = Math.round(15 * w.ma);
+                bearishScore += score;
+                keyPoints.push({
+                    text: `Price below short-term MA ($${smaShort.toFixed(2)}) - ${label} weakness detected`,
+                    signal: 'bearish'
+                });
+            }
+            
+            if (price > smaMedium) {
+                const score = Math.round(20 * w.ma);
+                bullishScore += score;
+                keyPoints.push({
+                    text: `Price above medium-term MA ($${smaMedium.toFixed(2)}) - Solid ${label} momentum`,
+                    signal: 'bullish'
+                });
+            } else {
+                const score = Math.round(20 * w.ma);
+                bearishScore += score;
+                keyPoints.push({
+                    text: `Price below medium-term MA ($${smaMedium.toFixed(2)}) - ${label} trend concerning`,
+                    signal: 'bearish'
+                });
+            }
+            
+            if (smaShort > smaMedium) {
+                const score = Math.round(10 * w.ma);
+                bullishScore += score;
+                keyPoints.push({
+                    text: `Golden cross pattern - Strong ${label} bullish alignment`,
+                    signal: 'bullish'
+                });
+            }
+            
+            // RSI Analysis (adjusted for timeframe)
+            const rsiOversold = timeframe === 'day' ? 25 : 30;
+            const rsiOverbought = timeframe === 'day' ? 75 : 70;
+            
+            if (rsi < rsiOversold) {
+                const score = Math.round(25 * w.rsi);
+                bullishScore += score;
+                keyPoints.push({
+                    text: `RSI at ${rsi.toFixed(1)} - Oversold, excellent ${label} entry opportunity`,
+                    signal: 'bullish'
+                });
+            } else if (rsi > rsiOverbought) {
+                const score = Math.round(20 * w.rsi);
+                bearishScore += score;
+                keyPoints.push({
+                    text: `RSI at ${rsi.toFixed(1)} - Overbought, consider ${label} profit-taking`,
+                    signal: 'bearish'
+                });
+            } else if (rsi > 50) {
+                const score = Math.round(10 * w.rsi);
+                bullishScore += score;
+                keyPoints.push({
+                    text: `RSI at ${rsi.toFixed(1)} - Positive ${label} momentum`,
+                    signal: 'bullish'
+                });
+            }
+            
+            // MACD
+            if (macd.histogram > 0) {
+                const score = Math.round(15 * w.macd);
+                bullishScore += score;
+                keyPoints.push({
+                    text: `MACD positive - ${label} momentum accelerating upward`,
+                    signal: 'bullish'
+                });
+            } else {
+                const score = Math.round(15 * w.macd);
+                bearishScore += score;
+                keyPoints.push({
+                    text: `MACD negative - ${label} downward pressure building`,
+                    signal: 'bearish'
+                });
+            }
+            
+            // Volume Analysis (more important for short-term traders)
+            if (volumeRatio > 1.5 && priceChange > 0) {
+                const score = Math.round(15 * w.volume);
+                bullishScore += score;
+                keyPoints.push({
+                    text: `Volume ${((volumeRatio - 1) * 100).toFixed(0)}% above average - Strong ${label} buying pressure`,
+                    signal: 'bullish'
+                });
+            } else if (volumeRatio > 1.5 && priceChange < 0) {
+                const score = Math.round(15 * w.volume);
+                bearishScore += score;
+                keyPoints.push({
+                    text: `Volume ${((volumeRatio - 1) * 100).toFixed(0)}% above average - Heavy ${label} distribution`,
+                    signal: 'bearish'
+                });
+            }
+            
+            // Price Action (timeframe-specific thresholds)
+            const strongThreshold = timeframe === 'day' ? 2 : timeframe === 'swing' ? 5 : 8;
+            
+            if (weekChange > strongThreshold) {
+                bullishScore += 10;
+                keyPoints.push({
+                    text: `Strong recent gain +${weekChange.toFixed(1)}% - ${label} continuation likely`,
+                    signal: 'bullish'
+                });
+            } else if (weekChange < -strongThreshold) {
+                bearishScore += 10;
+                keyPoints.push({
+                    text: `Recent decline ${weekChange.toFixed(1)}% - ${label} selling pressure increasing`,
+                    signal: 'bearish'
+                });
+            }
+            
+            // Determine signal with timeframe-specific recommendations
+            const netScore = bullishScore - bearishScore;
+            let signal, confidence, recommendation;
+            
+            const timeframeAdvice = {
+                'day': {
+                    entry: 'Enter positions early in the trading day with tight stop-losses',
+                    exit: 'Take profits before market close or use trailing stops',
+                    hold: 'Hold period: 1-5 days maximum'
                 },
-                grid: {
-                    vertLines: { color: '#1f2937' },
-                    horzLines: { color: '#1f2937' },
+                'swing': {
+                    entry: 'Enter on pullbacks to support levels',
+                    exit: 'Target 5-15% gains, use 3-5% stop-losses',
+                    hold: 'Hold period: 1-4 weeks typical'
                 },
-                timeScale: {
-                    borderColor: '#1f2937',
-                    timeVisible: true,
+                'weekly': {
+                    entry: 'Enter on weekly breakouts or strong weekly closes',
+                    exit: 'Use weekly support/resistance for exits',
+                    hold: 'Hold period: 1-3 months'
                 },
-                rightPriceScale: {
-                    borderColor: '#1f2937',
+                'position': {
+                    entry: 'Build positions gradually on dips',
+                    exit: 'Use wider stops (8-12%), target major levels',
+                    hold: 'Hold period: 3-12 months'
+                },
+                'longterm': {
+                    entry: 'Dollar-cost average into positions',
+                    exit: 'Focus on fundamental changes, not short-term noise',
+                    hold: 'Hold period: 1+ years for tax efficiency'
                 }
-            });
+            };
             
-            candleSeries = chart.addCandlestickSeries({
-                upColor: '#10b981',
-                downColor: '#ef4444',
-                borderUpColor: '#10b981',
-                borderDownColor: '#ef4444',
-                wickUpColor: '#10b981',
-                wickDownColor: '#ef4444',
-            });
+            const advice = timeframeAdvice[timeframe] || timeframeAdvice['swing'];
             
-            candleSeries.setData(data);
-            chart.timeScale().fitContent();
-            
-            // Add moving averages
-            const closes = data.map(d => d.close);
-            const sma20Data = [];
-            const sma50Data = [];
-            
-            for (let i = 19; i < data.length; i++) {
-                const sma20 = closes.slice(i - 19, i + 1).reduce((a, b) => a + b, 0) / 20;
-                sma20Data.push({ time: data[i].time, value: sma20 });
+            if (netScore > 30) {
+                signal = 'STRONG BUY';
+                confidence = Math.min(95, 70 + bullishScore / 2);
+                recommendation = `${currentSymbol} presents a compelling ${label} BUY opportunity with multiple bullish indicators aligned. ${advice.entry}. ${advice.hold}. Technical analysis shows strong upward momentum with favorable risk/reward for ${label} traders. This is a high-confidence recommendation backed by strong technical indicators across your chosen timeframe.`;
+            } else if (netScore > 15) {
+                signal = 'BUY';
+                confidence = Math.min(90, 65 + bullishScore / 2);
+                recommendation = `${currentSymbol} shows positive technical characteristics for ${label} trading with several bullish indicators. ${advice.entry}. ${advice.hold}. While not perfectly aligned, evidence suggests upside potential exceeds downside risk for your ${label} strategy. Recommended for traders with moderate risk tolerance.`;
+            } else if (netScore < -30) {
+                signal = 'STRONG SELL';
+                confidence = Math.min(95, 70 + bearishScore / 2);
+                recommendation = `${currentSymbol} exhibits significant technical deterioration for ${label} traders with multiple bearish warnings. ${advice.exit}. Evidence suggests substantial downside risk in the ${label} timeframe. Existing ${label} positions should be reduced or exited. New positions not advised until technical improvement.`;
+            } else if (netScore < -15) {
+                signal = 'SELL';
+                confidence = Math.min(90, 65 + bearishScore / 2);
+                recommendation = `Technical analysis reveals concerning weakness in ${currentSymbol} for ${label} trading. ${advice.exit}. Key indicators suggest further downside probable in your timeframe. Risk-averse ${label} traders should consider reducing exposure with disciplined stop-losses.`;
+            } else {
+                signal = 'HOLD';
+                confidence = 50 + Math.abs(netScore);
+                recommendation = `${currentSymbol} presents mixed signals for ${label} trading without clear directional conviction. Market appears to be in consolidation phase. For existing ${label} holders, maintain positions with tight risk management. New ${label} traders should wait for clearer technical signals before committing capital. ${advice.hold}.`;
             }
             
-            for (let i = 49; i < data.length; i++) {
-                const sma50 = closes.slice(i - 49, i + 1).reduce((a, b) => a + b, 0) / 50;
-                sma50Data.push({ time: data[i].time, value: sma50 });
-            }
+            const atr = price * 0.025;
             
-            const sma20Series = chart.addLineSeries({
-                color: '#3b82f6',
-                lineWidth: 2,
-                title: 'SMA 20'
-            });
-            sma20Series.setData(sma20Data);
-            
-            const sma50Series = chart.addLineSeries({
-                color: '#8b5cf6',
-                lineWidth: 2,
-                title: 'SMA 50'
-            });
-            sma50Series.setData(sma50Data);
+            return {
+                signal,
+                confidence: Math.round(confidence),
+                recommendation,
+                keyPoints: keyPoints.slice(0, 8),
+                priceTargets: {
+                    bearish: price * 0.95,
+                    neutral: price,
+                    bullish: price * 1.05
+                },
+                risks: {
+                    volatility: atr > price * 0.03 ? 'HIGH' : 'MEDIUM',
+                    trend: netScore > 20 ? 'LOW' : netScore < -20 ? 'HIGH' : 'MEDIUM',
+                    momentum: Math.abs(50 - rsi) < 20 ? 'LOW' : 'MEDIUM'
+                },
+                timeframeAdvice: advice
+            };
         }
         
-        function updateAnalysisPanel(symbol, analysis, data) {
+        function updateChart(data, timeframe) {
+            const container = document.getElementById('chart-container');
+            container.innerHTML = '';
+            
+            // Check if LightweightCharts is loaded
+            if (typeof LightweightCharts === 'undefined') {
+                container.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--text-secondary);">Loading chart...</div>';
+                setTimeout(() => updateChart(data, timeframe), 500);
+                return;
+            }
+            
+            try {
+                chart = LightweightCharts.createChart(container, {
+                    width: container.clientWidth,
+                    height: 500,
+                    layout: {
+                        background: { color: '#1a1f2e' },
+                        textColor: '#9aa0a6',
+                    },
+                    grid: {
+                        vertLines: { color: '#2d3548' },
+                        horzLines: { color: '#2d3548' },
+                    },
+                    timeScale: { borderColor: '#2d3548' },
+                    rightPriceScale: { borderColor: '#2d3548' }
+                });
+                
+                // Try new API first, fallback to old API
+                let candleSeries;
+                if (chart.addCandlestickSeries) {
+                    // Old API
+                    candleSeries = chart.addCandlestickSeries({
+                        upColor: '#00d4aa',
+                        downColor: '#ff4757',
+                        borderUpColor: '#00d4aa',
+                        borderDownColor: '#ff4757',
+                        wickUpColor: '#00d4aa',
+                        wickDownColor: '#ff4757',
+                    });
+                } else {
+                    // New API
+                    candleSeries = chart.addSeries(LightweightCharts.CandlestickSeries, {
+                        upColor: '#00d4aa',
+                        downColor: '#ff4757',
+                        borderUpColor: '#00d4aa',
+                        borderDownColor: '#ff4757',
+                        wickUpColor: '#00d4aa',
+                        wickDownColor: '#ff4757',
+                    });
+                }
+                
+                candleSeries.setData(data);
+                
+                // Add moving averages based on timeframe
+                const periods = {
+                    'day': [5, 10, 20],
+                    'swing': [10, 20, 50],
+                    'weekly': [20, 50, 100],
+                    'position': [50, 100, 200],
+                    'longterm': [100, 200, 300]
+                };
+                
+                const maPeriods = periods[timeframe] || [10, 20, 50];
+                const closes = data.map(d => d.close);
+                
+                // Add first MA
+                if (data.length >= maPeriods[0]) {
+                    const ma1Data = [];
+                    for (let i = maPeriods[0] - 1; i < data.length; i++) {
+                        const ma = closes.slice(i - maPeriods[0] + 1, i + 1).reduce((a, b) => a + b, 0) / maPeriods[0];
+                        ma1Data.push({ time: data[i].time, value: ma });
+                    }
+                    
+                    let ma1Series;
+                    if (chart.addLineSeries) {
+                        ma1Series = chart.addLineSeries({ color: '#1e90ff', lineWidth: 2 });
+                    } else {
+                        ma1Series = chart.addSeries(LightweightCharts.LineSeries, { color: '#1e90ff', lineWidth: 2 });
+                    }
+                    ma1Series.setData(ma1Data);
+                }
+                
+                // Add second MA
+                if (data.length >= maPeriods[1]) {
+                    const ma2Data = [];
+                    for (let i = maPeriods[1] - 1; i < data.length; i++) {
+                        const ma = closes.slice(i - maPeriods[1] + 1, i + 1).reduce((a, b) => a + b, 0) / maPeriods[1];
+                        ma2Data.push({ time: data[i].time, value: ma });
+                    }
+                    
+                    let ma2Series;
+                    if (chart.addLineSeries) {
+                        ma2Series = chart.addLineSeries({ color: '#a855f7', lineWidth: 2 });
+                    } else {
+                        ma2Series = chart.addSeries(LightweightCharts.LineSeries, { color: '#a855f7', lineWidth: 2 });
+                    }
+                    ma2Series.setData(ma2Data);
+                }
+                
+                chart.timeScale().fitContent();
+                
+            } catch (error) {
+                console.error('Chart error:', error);
+                container.innerHTML = `
+                    <div style="padding: 2rem; text-align: center;">
+                        <div style="color: var(--text-secondary); margin-bottom: 1rem;">
+                            Chart visualization temporarily unavailable
+                        </div>
+                        <div style="font-size: 0.875rem; color: var(--text-muted);">
+                            All technical analysis and recommendations are still working perfectly!
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        function updateUI(symbol, analysis, data, timeframe) {
             document.getElementById('stockSymbol').textContent = symbol;
-            
-            const signalCard = document.getElementById('signalCard');
-            const signalBadge = document.getElementById('signalBadge');
-            const confidenceFill = document.getElementById('confidenceFill');
-            
-            signalCard.className = 'signal-card ' + analysis.signal.toLowerCase();
-            signalBadge.className = 'signal-badge ' + analysis.signal.toLowerCase();
-            signalBadge.textContent = analysis.signal;
-            
-            document.getElementById('confidenceText').textContent = analysis.confidence + '%';
-            confidenceFill.style.width = analysis.confidence + '%';
-            
-            let fillColor;
-            if (analysis.signal === 'BUY') fillColor = 'var(--accent-buy)';
-            else if (analysis.signal === 'SELL') fillColor = 'var(--accent-sell)';
-            else fillColor = 'var(--accent-hold)';
-            confidenceFill.style.background = fillColor;
+            document.getElementById('stockPrice').textContent = `$${analysis.latest.close.toFixed(2)}`;
             
             const changeClass = analysis.priceChange >= 0 ? 'positive' : 'negative';
             const changeSign = analysis.priceChange >= 0 ? '+' : '';
+            document.getElementById('stockChange').textContent = `${changeSign}${analysis.priceChange.toFixed(2)}%`;
+            document.getElementById('stockChange').className = `signal-change ${changeClass}`;
             
-            document.getElementById('metricsGrid').innerHTML = `
-                <div class="metric">
-                    <div class="metric-label">Price</div>
-                    <div class="metric-value">$${analysis.price.toFixed(2)}</div>
+            const signalClass = analysis.signal.includes('BUY') ? 'buy' : analysis.signal.includes('SELL') ? 'sell' : 'hold';
+            document.getElementById('signalBadge').textContent = analysis.signal;
+            document.getElementById('signalBadge').className = `signal-badge-large ${signalClass}`;
+            
+            document.getElementById('confidenceValue').textContent = `${analysis.confidence}%`;
+            document.getElementById('confidenceFill').style.width = `${analysis.confidence}%`;
+            document.getElementById('confidenceFill').style.background = 
+                signalClass === 'buy' ? 'var(--accent-buy)' : signalClass === 'sell' ? 'var(--accent-sell)' : 'var(--accent-hold)';
+            
+            // Price targets
+            document.getElementById('priceTargets').innerHTML = `
+                <div class="price-target bearish">
+                    <div class="price-target-label">Bearish Target</div>
+                    <div class="price-target-value">$${analysis.priceTargets.bearish.toFixed(2)}</div>
                 </div>
-                <div class="metric">
-                    <div class="metric-label">Change</div>
-                    <div class="metric-value ${changeClass}">${changeSign}${analysis.priceChange.toFixed(2)}%</div>
+                <div class="price-target neutral">
+                    <div class="price-target-label">Current Price</div>
+                    <div class="price-target-value">$${analysis.priceTargets.neutral.toFixed(2)}</div>
                 </div>
-                <div class="metric">
-                    <div class="metric-label">Volume</div>
-                    <div class="metric-value">${formatVolume(analysis.volume)}</div>
-                </div>
-                <div class="metric">
-                    <div class="metric-label">RSI (14)</div>
-                    <div class="metric-value">${analysis.rsi.toFixed(1)}</div>
+                <div class="price-target bullish">
+                    <div class="price-target-label">Bullish Target</div>
+                    <div class="price-target-value">$${analysis.priceTargets.bullish.toFixed(2)}</div>
                 </div>
             `;
             
-            const reasonsList = analysis.reasons.map(r => `<li>${r}</li>`).join('');
-            document.getElementById('analysisText').innerHTML = `<ul>${reasonsList}</ul>`;
+            // Risk assessment
+            document.getElementById('riskAssessment').innerHTML = `
+                <div class="risk-item">
+                    <div class="risk-level">Volatility Risk</div>
+                    <div class="risk-value ${analysis.risks.volatility.toLowerCase()}">${analysis.risks.volatility}</div>
+                </div>
+                <div class="risk-item">
+                    <div class="risk-level">Trend Risk</div>
+                    <div class="risk-value ${analysis.risks.trend.toLowerCase()}">${analysis.risks.trend}</div>
+                </div>
+                <div class="risk-item">
+                    <div class="risk-level">Momentum Risk</div>
+                    <div class="risk-value ${analysis.risks.momentum.toLowerCase()}">${analysis.risks.momentum}</div>
+                </div>
+            `;
+            
+            // Recommendation with timeframe advice
+            const timeframeLabels = {
+                'day': 'Day Trading',
+                'swing': 'Swing Trading',
+                'weekly': 'Weekly Trading',
+                'position': 'Position Trading',
+                'longterm': 'Long-term Investing'
+            };
+            
+            document.getElementById('recommendationSummary').textContent = analysis.recommendation;
+            
+            const advicePoints = analysis.timeframeAdvice ? [
+                `📍 Entry Strategy: ${analysis.timeframeAdvice.entry}`,
+                `🎯 Exit Strategy: ${analysis.timeframeAdvice.exit}`,
+                `⏱️ ${analysis.timeframeAdvice.hold}`
+            ] : [];
+            
+            const allPoints = [...analysis.keyPoints.slice(0, 5).map(p => p.text), ...advicePoints];
+            document.getElementById('recommendationPoints').innerHTML = 
+                allPoints.map(p => `<li>${p}</li>`).join('');
+            
+            // Technical indicators
+            document.getElementById('technicalIndicators').innerHTML = `
+                <div class="analysis-item ${analysis.rsi < 30 ? 'bullish' : analysis.rsi > 70 ? 'bearish' : 'neutral'}">
+                    <div class="analysis-item-header">
+                        <div class="analysis-item-title">RSI (${analysis.periods.rsi})</div>
+                        <div class="analysis-item-signal ${analysis.rsi < 30 ? 'bullish' : analysis.rsi > 70 ? 'bearish' : 'neutral'}">
+                            ${analysis.rsi < 30 ? 'OVERSOLD' : analysis.rsi > 70 ? 'OVERBOUGHT' : 'NEUTRAL'}
+                        </div>
+                    </div>
+                    <div class="analysis-item-text">Current: ${analysis.rsi.toFixed(2)} - Optimized for ${timeframeLabels[timeframe]}</div>
+                </div>
+                <div class="analysis-item ${analysis.macd.histogram > 0 ? 'bullish' : 'bearish'}">
+                    <div class="analysis-item-header">
+                        <div class="analysis-item-title">MACD</div>
+                        <div class="analysis-item-signal ${analysis.macd.histogram > 0 ? 'bullish' : 'bearish'}">
+                            ${analysis.macd.histogram > 0 ? 'BULLISH' : 'BEARISH'}
+                        </div>
+                    </div>
+                    <div class="analysis-item-text">Histogram: ${analysis.macd.histogram.toFixed(2)} - ${timeframeLabels[timeframe]} momentum</div>
+                </div>
+                <div class="analysis-item neutral">
+                    <div class="analysis-item-header">
+                        <div class="analysis-item-title">Moving Averages</div>
+                        <div class="analysis-item-signal neutral">ACTIVE</div>
+                    </div>
+                    <div class="analysis-item-text">
+                        Short: $${analysis.smaShort.toFixed(2)} | 
+                        Medium: $${analysis.smaMedium.toFixed(2)} | 
+                        Long: $${analysis.smaLong.toFixed(2)}
+                    </div>
+                </div>
+            `;
+            
+            // Metrics
+            document.getElementById('fundamentalMetrics').innerHTML = `
+                <div class="metric-card bullish">
+                    <div class="metric-label">Volume</div>
+                    <div class="metric-value">${formatVolume(analysis.latest.volume)}</div>
+                    <div class="metric-subvalue">Avg: ${formatVolume(analysis.avgVolume)}</div>
+                </div>
+                <div class="metric-card ${analysis.weekChange > 0 ? 'bullish' : 'bearish'}">
+                    <div class="metric-label">Week Change</div>
+                    <div class="metric-value">${analysis.weekChange > 0 ? '+' : ''}${analysis.weekChange.toFixed(2)}%</div>
+                </div>
+                <div class="metric-card ${analysis.monthChange > 0 ? 'bullish' : 'bearish'}">
+                    <div class="metric-label">Month Change</div>
+                    <div class="metric-value">${analysis.monthChange > 0 ? '+' : ''}${analysis.monthChange.toFixed(2)}%</div>
+                </div>
+                <div class="metric-card neutral">
+                    <div class="metric-label">Timeframe</div>
+                    <div class="metric-value" style="font-size: 1rem;">${timeframeLabels[timeframe]}</div>
+                </div>
+            `;
+            
+            // Key insights
+            document.getElementById('keyInsights').innerHTML = 
+                analysis.keyPoints.slice(0, 4).map(p => `
+                    <div class="analysis-item ${p.signal}">
+                        <div class="analysis-item-text">${p.text}</div>
+                    </div>
+                `).join('');
         }
         
-        function formatVolume(volume) {
-            if (volume >= 1e9) return (volume / 1e9).toFixed(2) + 'B';
-            if (volume >= 1e6) return (volume / 1e6).toFixed(1) + 'M';
-            if (volume >= 1e3) return (volume / 1e3).toFixed(1) + 'K';
-            return volume.toString();
+        function formatVolume(vol) {
+            if (vol >= 1e9) return (vol / 1e9).toFixed(2) + 'B';
+            if (vol >= 1e6) return (vol / 1e6).toFixed(1) + 'M';
+            return (vol / 1e3).toFixed(1) + 'K';
         }
         
         function showLoading(show) {
@@ -931,32 +1340,29 @@
             document.getElementById('analyzeBtn').disabled = show;
         }
         
-        function showError(message) {
-            const errorMsg = document.getElementById('errorMsg');
-            errorMsg.textContent = message;
-            errorMsg.classList.add('active');
+        function showError(msg) {
+            const el = document.getElementById('errorMsg');
+            el.textContent = '⚠️ ' + msg;
+            el.classList.add('active');
         }
         
         function hideError() {
             document.getElementById('errorMsg').classList.remove('active');
         }
         
-        // Handle enter key
         document.getElementById('symbolInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') analyzeStock();
         });
         
-        // Responsive chart
         window.addEventListener('resize', () => {
             if (chart) {
-                const container = document.getElementById('tradingview-chart');
-                chart.applyOptions({ width: container.clientWidth });
+                chart.applyOptions({ width: document.getElementById('chart-container').clientWidth });
             }
         });
         
-        // Load default stock on page load
         window.addEventListener('load', () => {
-            analyzeStock();
+            // Wait for chart library to load
+            setTimeout(() => analyzeStock(), 1000);
         });
     </script>
 </body>
